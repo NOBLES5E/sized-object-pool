@@ -44,7 +44,7 @@ impl<T: SizedAllocatable> SizedPool<T> {
         Ok(self.get_subpool(size)?.try_pull())
     }
 
-    pub fn pull<F: Fn() -> T>(&self, size: usize) -> Result<Reusable<T>, SizedPoolError> {
+    pub fn pull(&self, size: usize) -> Result<Reusable<T>, SizedPoolError> {
         let reusable = self.try_pull(size)?;
         match reusable {
             None => Ok(Reusable::new(
