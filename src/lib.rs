@@ -21,10 +21,7 @@ pub struct SizedPool<T: SizedAllocatable> {
 impl<T: SizedAllocatable> SizedPool<T> {
     /// cap is the capacity of each subpool, pool_size_power_of_two is the number of subpools,
     /// init_fn takes the pool_size (the power of two) as input and outputs the reusable resource
-    pub fn new<F>(cap: usize, pool_size_power_of_two: u32) -> Self
-    where
-        F: Fn(usize) -> T,
-    {
+    pub fn new(cap: usize, pool_size_power_of_two: u32) -> Self {
         let mut pools = Vec::new();
         for pool_power in 0..pool_size_power_of_two {
             let pool = Pool::new(cap, || T::new(2_usize.pow(pool_power)));
