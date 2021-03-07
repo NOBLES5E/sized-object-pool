@@ -1,4 +1,5 @@
-use object_pool::{Pool, Reusable};
+use object_pool::Pool;
+pub use object_pool::Reusable;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -21,17 +22,15 @@ impl<T: SizedAllocatable> SizedPool<T> {
     /// cap is the capacity of each subpool, pool_size_power_of_two is the number of subpools,
     /// init_fn takes the pool_size (the power of two) as input and outputs the reusable resource
     pub fn new<F>(cap: usize, pool_size_power_of_two: u32) -> Self
-        where F: Fn(usize) -> T {
+    where
+        F: Fn(usize) -> T,
+    {
         let mut pools = Vec::new();
         for pool_power in 0..pool_size_power_of_two {
-            let pool = Pool::new(cap, || {
-                T::new(2_usize.pow(pool_power))
-            });
+            let pool = Pool::new(cap, || T::new(2_usize.pow(pool_power)));
             pools.push(pool);
         }
-        Self {
-            sub_pools: pools
-        }
+        Self { sub_pools: pools }
     }
 
     fn get_subpool_location(&self, size: usize) -> usize {
@@ -39,7 +38,9 @@ impl<T: SizedAllocatable> SizedPool<T> {
     }
 
     fn get_subpool(&self, size: usize) -> Result<&Pool<T>, SizedPoolError> {
-        self.sub_pools.get(self.get_subpool_location(size)).ok_or(SizedPoolError::SizeExceedMaxSize)
+        self.sub_pools
+            .get(self.get_subpool_location(size))
+            .ok_or(SizedPoolError::SizeExceedMaxSize)
     }
 
     pub fn try_pull(&self, size: usize) -> Result<Option<Reusable<T>>, SizedPoolError> {
@@ -49,8 +50,11 @@ impl<T: SizedAllocatable> SizedPool<T> {
     pub fn pull<F: Fn() -> T>(&self, size: usize) -> Result<Reusable<T>, SizedPoolError> {
         let reusable = self.try_pull(size)?;
         match reusable {
-            None => {Ok(Reusable::new(self.get_subpool(size)?, T::new(2_usize.pow(self.get_subpool_location(size) as u32))))}
-            Some(x) => {Ok(x)}
+            None => Ok(Reusable::new(
+                self.get_subpool(size)?,
+                T::new(2_usize.pow(self.get_subpool_location(size) as u32)),
+            )),
+            Some(x) => Ok(x),
         }
     }
 
