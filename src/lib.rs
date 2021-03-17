@@ -41,7 +41,37 @@ impl<T: SizedAllocatable + DynamicReset> SizedPool<T> {
             .ok_or(SizedPoolError::SizeExceedMaxSize)
     }
 
-    pub fn try_pull(&self, size: usize) -> Result<Option<DynamicPoolItem<T>>, SizedPoolError> {
-        Ok(self.get_subpool(size)?.try_take())
+    pub fn try_pull(&self, size: usize) -> Result<DynamicPoolItem<T>, SizedPoolError> {
+        Ok(self.get_subpool(size)?.take())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[derive(Debug)]
+    struct TestItem {
+        size: usize,
+    }
+
+    impl SizedAllocatable for TestItem {
+        fn new(size: usize) -> Self {
+            Self { size }
+        }
+
+        fn size(&self) -> usize {
+            self.size
+        }
+    }
+
+    impl DynamicReset for TestItem {
+        fn reset(&mut self) {}
+    }
+
+    #[test]
+    fn test_allocate() {
+        let pool: SizedPool<TestItem> = SizedPool::new(0, 40, 1024);
+        dbg!(pool.try_pull(10).unwrap());
     }
 }
