@@ -1,6 +1,6 @@
 [package]
 name = "sized-object-pool"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Xiangru Lian <admin@mail.xrlian.com>"]
 edition = "2018"
 description = "Object size aware object pool."
@@ -12,3 +12,4 @@ license = "MIT"
 [dependencies]
 dynamic-pool = "0.2"
 thiserror = "1"
+tracing = "0.1"

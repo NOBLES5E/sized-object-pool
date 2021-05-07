@@ -42,7 +42,14 @@ impl<T: SizedAllocatable + DynamicReset> SizedPool<T> {
     }
 
     pub fn try_pull(&self, size: usize) -> Result<DynamicPoolItem<T>, SizedPoolError> {
-        Ok(self.get_subpool(size)?.take())
+        let pool = self.get_subpool(size)?;
+        match pool.try_take() {
+            None => {
+                tracing::debug!("not enough items in pool, allocating");
+                Ok(pool.take())
+            }
+            Some(x) => Ok(x),
+        }
     }
 }
 
@@ -72,6 +79,9 @@ mod test {
     #[test]
     fn test_allocate() {
         let pool: SizedPool<TestItem> = SizedPool::new(0, 40, 1024);
-        dbg!(pool.try_pull(10).unwrap());
+        let mut items = Vec::new();
+        for _ in 0..2048 {
+            items.push(pool.try_pull(10).unwrap());
+        }
     }
 }
